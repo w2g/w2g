@@ -28,12 +28,12 @@ def build_tables():
     MetaData().create_all(engine)
 
 
-"""Associates a directed edge with a specific view"""
-edges_to_views = \
-    Table('edges_to_views', core.Base.metadata,
+"""Associates a directed edge with a specific context"""
+edges_to_contexts = \
+    Table('edges_to_contexts', core.Base.metadata,
           Column('id', BigInteger, primary_key=True),
-          Column('view_id', BigInteger,
-                 ForeignKey('views.id'),
+          Column('context_id', BigInteger,
+                 ForeignKey('contexts.id'),
                  nullable=False),
           Column('edge_id', BigInteger,
                  ForeignKey('edges.id'),
@@ -41,19 +41,19 @@ edges_to_views = \
     )
 
 
-class View(core.Base):
-    """Views are named semantic groupings of directed edges which describe specific problem
+class Context(core.Base):
+    """Contexts are named semantic groupings of directed edges which describe specific problem
     spaces or applications like math.mx or the-foundation.
     """
 
-    __tablename__ = "views"
+    __tablename__ = "contexts"
     TBL = __tablename__
 
     id = Column(BigInteger, primary_key=True)
-    name = Column(Unicode, unique=True, nullable=False)
+    entity_id = Column(BigInteger, ForeignKey('entities.id'))
 
-    # A view's directed edges come from the edge id in its assocition through view_id
-    edges = relationship('Edge', secondary=edges_to_views)
+    # A context's directed edges come from the edge id in its assocition through context_id
+    edges = relationship('Edge', secondary=edges_to_contexts)
 
 
 class Source(core.Base):
@@ -74,7 +74,7 @@ class Edge(core.Base):
     TBL = __tablename__
 
     id = Column(BigInteger, primary_key=True)
-    relation_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
+    relation_eid = Column(BigInteger, ForeignKey('entities.id'))
     source_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     target_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     created = Column(DateTime(timezone=False), default=datetime.utcnow,
