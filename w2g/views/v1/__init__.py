@@ -11,7 +11,7 @@
 
 from flask import request, Response
 from flask.views import MethodView
-from api import graph
+from api import graph  # Query 
 from views import paginate, rest
 
 
@@ -33,9 +33,10 @@ class Page(MethodView):
         return request.form.keys()
 
 
-class Graphql(MethodView):
+class Index(MethodView):
     @rest
     def get(self):
+        # TODO: Query.execute ...
         return {"endpoints": graph.core.models.keys()}
 
 
@@ -43,5 +44,5 @@ class Graphql(MethodView):
 urls = (
     '/<cls>/<int:id>', Record,
     '/<cls>', Page,
-    '/', Graphql
+    '/', Index # will become graphql endpoint
 )

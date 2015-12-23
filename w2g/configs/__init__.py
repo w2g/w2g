@@ -49,6 +49,7 @@ if CRT and KEY:
 # Especially useful for SeaDragon viewers running locally
 cors = bool(int(config.getdef('server', 'cors', 0)))
 
+SECRET_KEY = config.get('security', 'secret', raw=True)
 
 # DATABASES
 DB_URI = '%(dbn)s://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % {

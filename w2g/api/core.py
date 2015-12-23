@@ -155,4 +155,3 @@ class BaseMixin(object):
 
 
 Base = declarative_base(cls=BaseMixin)
-

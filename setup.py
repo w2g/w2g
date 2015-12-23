@@ -53,9 +53,11 @@ setup(
     install_requires=[
         'Flask >= 0.10.1',
         'Flask-Routing',
+        'Flask-SuperAdmin',
+        'flask-cors',
         'psycopg2 >= 2.5.1',
         'requests >= 1.2.3',
         'sqlalchemy >= 1.0.6',
-        'flask-cors'
+        'graphene'
         ]
 )

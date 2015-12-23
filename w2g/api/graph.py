@@ -28,21 +28,21 @@ def build_tables():
     MetaData().create_all(engine)
 
 
-"""Associates an arrow (edge) with a specific view"""
-arrows_to_views = \
-    Table('arrows_to_views', core.Base.metadata,
+"""Associates a directed edge with a specific view"""
+edges_to_views = \
+    Table('edges_to_views', core.Base.metadata,
           Column('id', BigInteger, primary_key=True),
           Column('view_id', BigInteger,
                  ForeignKey('views.id'),
                  nullable=False),
-          Column('arrow_id', BigInteger,
-                 ForeignKey('arrows.id'),
+          Column('edge_id', BigInteger,
+                 ForeignKey('edges.id'),
                  nullable=False)
     )
 
 
 class View(core.Base):
-    """Views are named semantic groupings of arrows which describe specific problem
+    """Views are named semantic groupings of directed edges which describe specific problem
     spaces or applications like math.mx or the-foundation.
     """
 
@@ -52,8 +52,8 @@ class View(core.Base):
     id = Column(BigInteger, primary_key=True)
     name = Column(Unicode, unique=True, nullable=False)
 
-    # A view's arrows come from the arrow_id in its assocition through view_id
-    arrows = relationship('Arrow', secondary=arrows_to_views)
+    # A view's directed edges come from the edge id in its assocition through view_id
+    edges = relationship('Edge', secondary=edges_to_views)
 
 
 class Source(core.Base):
@@ -67,19 +67,21 @@ class Source(core.Base):
     name = Column(Unicode, unique=True, nullable=False)
 
 
-class Arrow(core.Base):
+class Edge(core.Base):
     """Directed edges between two entitites"""
 
-    __tablename__ = "arrows"
+    __tablename__ = "edges"
     TBL = __tablename__
 
     id = Column(BigInteger, primary_key=True)
-    source_id = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
-    target_id = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
+    relation_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
+    source_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
+    target_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     created = Column(DateTime(timezone=False), default=datetime.utcnow,
                      nullable=False)
-    source = relationship('Entity', foreign_keys=[source_id])
-    target = relationship('Entity', foreign_keys=[target_id], backref="arrows")
+    relation = relationship('Entity', foreign_keys=[relation_eid])
+    source = relationship('Entity', foreign_keys=[source_eid])
+    target = relationship('Entity', foreign_keys=[target_eid], backref="edges")
 
 
 class Entity(core.Base):
