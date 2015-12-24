@@ -33,7 +33,11 @@ apis = {
         "params": {
             "order": "desc", "sort": "popular", "site": "stackoverflow"
         }
+    },
+    "openlibrary": {
+        "url": "https://openlibrary.org/api/books",
+        "params": lambda bibkeys: {
+            "bibkeys": bibkeys  # csv: ISBN:XXXXXXXXXXXXX,ISBN:XX...
+        }
     }
-
 }
-

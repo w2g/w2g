@@ -40,6 +40,17 @@ edges_to_contexts = \
                  nullable=False)
     )
 
+"""Associates an entity to its sources"""
+entities_to_sources = \
+    Table('entities_to_sources', core.Base.metadata,
+          Column('id', BigInteger, primary_key=True),
+          Column('entity_id', BigInteger,
+                 ForeignKey('entities.id'),
+                 nullable=False),
+          Column('source_id', BigInteger,
+                 ForeignKey('sources.id'),
+                 nullable=False)
+    )
 
 class Context(core.Base):
     """Contexts are named semantic groupings of directed edges which describe specific problem
@@ -57,14 +68,16 @@ class Context(core.Base):
 
 
 class Source(core.Base):
-    """The remote service from which an entity tag has been sources,
+    """The remote service/source from which an entity tag has been sourced;
     e.g. facebook, google, stackoverflow, etc."""
 
     __tablename__ = "sources"
     TBL = __tablename__
 
     id = Column(BigInteger, primary_key=True)
-    name = Column(Unicode, unique=True, nullable=False)
+    entity_id = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
+    url = Column(Unicode, unique=True)  # see vendors.py
+    entity = relationship('Entity')
 
 
 class Edge(core.Base):
@@ -86,18 +99,17 @@ class Edge(core.Base):
 
 class Entity(core.Base):
 
-    """Ask Jessy how to make things extend Entity"""
     __tablename__ = "entities"
     TBL = __tablename__
 
     id = Column(BigInteger, primary_key=True)
-    tag = Column(Unicode, unique=True, nullable=False)
     name = Column(Unicode, nullable=False)
-    service_id = Column(BigInteger, ForeignKey('sources.id'), nullable=False)
+
     # creator = Column(BigInteger, ForeignKey('users.id'))
     created = Column(DateTime(timezone=False), default=datetime.utcnow,
                      nullable=False)
     modified = Column(DateTime(timezone=False), default=None)
+    sources = relationship('Source', secondary=entities_to_sources)
 
 
 class Metadata(core.Base):
