@@ -68,6 +68,12 @@ class BaseMixin(object):
         raise GrooveboxException(
             "Failed to get %s: %s" % (cls.__name__, cause),
             cause=list(cause.keys()) if kwargs else cause)
+    
+    def __repr__(self):
+        attrs = self.__table__.columns
+        vals = dict([(attr, getattr(self, attr.name)) for attr in attrs])
+        return "<%s : %s>" % (self.__class__.__name__, vals)
+    
 
     def dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

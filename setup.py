@@ -39,7 +39,7 @@ setup(
     name='w2g',
     version=find_version("w2g", "__init__.py"),
     description='no description available',
-    long_description=read('README.rst'),
+    long_description=read('README.md'),
     classifiers=[
         ],
     author='mek',

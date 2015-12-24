@@ -27,7 +27,7 @@ app.secret_key = configs.SECRET_KEY
 app.json_encoder = CustomJSONEncoder
 cors = CORS(app) if configs.cors else None
 
-if configs.DEBUG:
+if configs.DEBUG or configs.UWSGI:
     import sys
     if sys.version_info < (3, 0):
         from flask.ext.superadmin import Admin, model

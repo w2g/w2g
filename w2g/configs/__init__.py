@@ -30,6 +30,7 @@ config = configparser.ConfigParser()
 config.read('%s/settings.cfg' % path)
 config.getdef = types.MethodType(getdef, config)
 
+UWSGI =  bool(int(config.getdef("server", "uwsgi", 0)))
 HOST = config.getdef("server", "host", '0.0.0.0')
 PORT = int(config.getdef("server", "port", 8080))
 DEBUG = bool(int(config.getdef("server", "debug", 1)))
