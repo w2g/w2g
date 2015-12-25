@@ -3,11 +3,11 @@
 The World Wide Graph
 
 * [Introduction](#Introduction)
-* [Installation a Server](#Getting-Started)
-* [Building a Client](#Consuming-the-Graph)
-* [Data Structures](#Datastructures)
-* [Privacy](#Privacy--Security--Conflicts-of-Interest)
-* [Consuming the Graph API (Clients)](#Consuming-the-Graph)
+* [Installing w2g (Server)](#getting-started)
+* [Goals & Philosophy](#goals-and-philosophy)
+* [Data Structures](#data-structures)
+* [Privacy](#privacy--security--conflicts-of-interest)
+* [Using the Graph API (Clients)](#consuming-the-graph)
 
 ## Introduction
 
