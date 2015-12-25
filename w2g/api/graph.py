@@ -40,17 +40,19 @@ edges_to_contexts = \
                  nullable=False)
     )
 
-"""Associates an entity to its sources"""
-entities_to_sources = \
-    Table('entities_to_sources', core.Base.metadata,
-          Column('id', BigInteger, primary_key=True),
-          Column('entity_id', BigInteger,
-                 ForeignKey('entities.id'),
-                 nullable=False),
-          Column('source_id', BigInteger,
-                 ForeignKey('sources.id'),
-                 nullable=False)
-    )
+class RemoteID(core.Base):
+    """Associates an entity to its sources"""
+
+    __tablename__ = "entities_to_sources"
+    TBL = __tablename__
+
+    id = Column(BigInteger, primary_key=True)
+    remote_id = Column(Unicode, nullable=False)
+    entity_id = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
+    source_id = Column(BigInteger, ForeignKey('sources.id'), nullable=False)
+    entity = relationship('Entity', backref='remote_ids')
+    source = relationship('Source')
+
 
 class Context(core.Base):
     """Contexts are named semantic groupings of directed edges which describe specific problem
@@ -65,6 +67,12 @@ class Context(core.Base):
 
     # A context's directed edges come from the edge id in its assocition through context_id
     edges = relationship('Edge', secondary=edges_to_contexts)
+    entity = relationship('Entity', backref='contexts')
+
+    def dict(self):        
+        context = super(Context, self).dict()
+        context['entity'] = self.entity.dict()
+        return context
 
 
 class Source(core.Base):
@@ -109,7 +117,6 @@ class Entity(core.Base):
     created = Column(DateTime(timezone=False), default=datetime.utcnow,
                      nullable=False)
     modified = Column(DateTime(timezone=False), default=None)
-    sources = relationship('Source', secondary=entities_to_sources)
 
 
 class Metadata(core.Base):

@@ -70,9 +70,7 @@ class BaseMixin(object):
             cause=list(cause.keys()) if kwargs else cause)
     
     def __repr__(self):
-        attrs = self.__table__.columns
-        vals = dict([(attr, getattr(self, attr.name)) for attr in attrs])
-        return "<%s : %s>" % (self.__class__.__name__, vals)
+        return str(self.dict())
     
 
     def dict(self):

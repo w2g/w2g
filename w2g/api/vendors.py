@@ -23,7 +23,7 @@ apis = {
         }
     },
     "facebook": {
-        "url": "graph.facebook.com/v2.5/search",
+        "url": "https://graph.facebook.com/v2.5/search",
         "params": lambda query, fields: {
             'type': 'topic', 'q': query, 'fields': fields
         }
