@@ -12,7 +12,10 @@
 from flask import request, Response
 from flask.views import MethodView
 from api import graph  # Query 
-from views import paginate, rest
+from views import paginate, rest, search
+
+# Issue: Move limit out of @paginate and into get(self, limit=...) so
+# other methods (like search) can use it.
 
 
 class Record(MethodView):
@@ -26,11 +29,18 @@ class Page(MethodView):
     @rest
     @paginate(limit=50)
     def get(self, cls):
+        if request.args.get('action') == 'search':
+            return search(graph.core.models[cls])
         return graph.db.query(graph.core.models[cls])
 
 
     def post(self, cls):
         return request.form.keys()
+
+
+class Database(MethodView):
+    """Download a snapshot of the database"""
+    pass
 
 
 class Index(MethodView):
@@ -44,5 +54,6 @@ class Index(MethodView):
 urls = (
     '/<cls>/<int:id>', Record,
     '/<cls>', Page,
+    '/db', Database,
     '/', Index # will become graphql endpoint
 )

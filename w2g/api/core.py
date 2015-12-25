@@ -12,7 +12,7 @@
 """
 
 
-from . import db
+from . import db, engine
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql.expression import ClauseElement
@@ -153,9 +153,20 @@ class BaseMixin(object):
         return False
 
     @classmethod
-    def search(cls, query, field, limit=10, page=0):
-        return cls.query.filter(getattr(cls, field).ilike("%" + query + "%"))\
-            .offset(page * limit).limit(limit).all()
+    def search(cls, query, field, limit=10, page=0, lazy=True):
+        query = cls.query.filter(getattr(cls, field).ilike("%" + query + "%"))\
+            .offset(page * limit).limit(limit)
+        return query if lazy else query.all()
 
 
 Base = declarative_base(cls=BaseMixin)
+
+
+#def backupdb():
+#    """Return a timestamped postgresql db.sql snapshot
+#    """
+#    tables = Base.metadata.tables.keys()
+#    for table in tables:
+#        entries = engine.execute("SELECT * FROM %s" % (table))
+#        columns = []
+#    raise NotImplemented

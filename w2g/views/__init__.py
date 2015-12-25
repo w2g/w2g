@@ -11,11 +11,13 @@
     :license: see LICENSE for more details.
 """
 
+import calendar
+from datetime import datetime
 from flask import jsonify, request
 from flask import Flask, jsonify
 from flask.json import JSONEncoder
-import calendar
-from datetime import datetime
+from api import db
+
 
 
 class CustomJSONEncoder(JSONEncoder):
@@ -44,6 +46,9 @@ def rest(f):
             return jsonify(f(*args, **kwargs))
         except Exception as e:
             return jsonify({"error": str(e)})
+        finally:
+            db.rollback()
+            db.remove()
     return inner
 
 
@@ -59,3 +64,15 @@ def paginate(limit=100, dump=lambda i, **opts: i.dict(**opts), **options):
             return {cls: [dump(i, **options) for i in items]}
         return inner
     return outer
+
+
+def search(model, limit=50, lazy=True):
+    query = request.args.get('query')
+    field = request.args.get('field')
+    limit = min(request.args.get('limit', limit), limit)
+    if all([query, field, limit]):
+        return model.search(query, field=field, limit=limit, lazy=lazy)
+    raise ValueError('Query and field must be provided. Valid fields are: %s' \
+                         %  model.__table__.columns.keys())
+    
+    
