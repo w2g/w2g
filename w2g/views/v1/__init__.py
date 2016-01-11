@@ -17,11 +17,16 @@ from views import paginate, rest, search
 # Issue: Move limit out of @paginate and into get(self, limit=...) so
 # other methods (like search) can use it.
 
+"""
+
+If I hit /foo I want a list of all edges for a Collection
+"""
+
 
 class Record(MethodView):
     @rest
     def get(self, cls, id):
-        return graph.core.models[cls].get(id).dict()
+        return graph.core.models[cls].get(id).dict(verbose=True)
 
 
 class Page(MethodView):
@@ -33,10 +38,11 @@ class Page(MethodView):
             return search(graph.core.models[cls])
         return graph.db.query(graph.core.models[cls])
 
-
-    def post(self, cls):
-        return request.form.keys()
-
+    @rest
+    def post(self, cls):        
+        c = graph.core.models[cls](**dict([(i, j) for i, j in request.form.items()]))
+        c.create()
+        return c.dict()
 
 class Database(MethodView):
     """Download a snapshot of the database"""

@@ -28,18 +28,15 @@ def build_tables():
     MetaData().create_all(engine)
 
 
-class Scope(core.Base):
-    """A scope is an association between a directed edge and a context"""
-
-    __tablename__ = 'edges_to_contexts'
-
-    id = Column(BigInteger, primary_key=True)
-    context_id = Column(BigInteger, ForeignKey('contexts.id'), nullable=False)
-    edge_id = Column(BigInteger, ForeignKey('edges.id'), nullable=False)
-
-    context = relationship('Context', backref='scopes')
-    edge = relationship('Edge', backref='scopes')
-
+"""Associates a directed edge with an entity"""
+edge_entities = \
+    Table('edges_to_entities', core.Base.metadata,
+          Column('id', BigInteger, primary_key=True),
+          Column('entity_id', BigInteger,
+                 ForeignKey('entities.id'), nullable=False),
+          Column('edge_id', BigInteger,
+                 ForeignKey('edges.id'), nullable=False)
+          )
 
 class RemoteID(core.Base):
     """Associates an entity to its sources"""
@@ -54,23 +51,30 @@ class RemoteID(core.Base):
     source = relationship('Source')
 
 
-class Context(core.Base):
-    """Contexts are named semantic groupings of directed edges which describe specific problem
-    spaces or applications like math.mx or the-foundation.
+class Application(core.Base):
+    """Applications are Entities which represent a semantic group
+    of related edges. It associates directed edges to a specific
+    topic, category, problem-space, or application like math.mx or the-foundation.
     """
 
-    __tablename__ = "contexts"
+    __tablename__ = "applications"
 
     id = Column(BigInteger, primary_key=True)
-    entity_id = Column(BigInteger, ForeignKey('entities.id'))
+    entity_id = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
+    edge_id = Column(BigInteger, ForeignKey('edges.id'), nullable=False)
 
-    # A context's directed edges come from the edge id in its assocition through context_id
-    entity = relationship('Entity', backref='contexts')
+    entity = relationship('Entity')
+    edge = relationship('Edge',
+                        # All Applications of an edge can be retrieved
+                        # by backref: edge.applications
+                        backref='applications')
 
-    def dict(self):        
-        context = super(Context, self).dict()
-        context['entity'] = self.entity.dict()
-        return context
+    def dict(self, verbose=False):
+        app = super(Domain, self).dict()
+        app['entity'] = self.entity.dict()
+        if verbose:
+            app['edges'] = [e.dict() for e in self.edges]
+        return app
 
 
 class Source(core.Base):
@@ -91,14 +95,30 @@ class Edge(core.Base):
     __tablename__ = "edges"
 
     id = Column(BigInteger, primary_key=True)
-    relation_eid = Column(BigInteger, ForeignKey('entities.id'))
     source_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
+    relation_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     target_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     created = Column(DateTime(timezone=False), default=datetime.utcnow,
                      nullable=False)
-    relation = relationship('Entity', foreign_keys=[relation_eid])
-    source = relationship('Entity', foreign_keys=[source_eid])
-    target = relationship('Entity', foreign_keys=[target_eid], backref="edges")
+
+    # A source has this directed relation to this target.
+    source = relationship('Entity', foreign_keys=[source_eid], backref='outgoing_edges')
+    relation = relationship('Entity', foreign_keys=[relation_eid], backref='relations')
+    target = relationship('Entity', foreign_keys=[target_eid], backref='incoming_edges')
+
+    # This edge, the (source, relation, target) 3-tuple, can be
+    # represented/described as the following entities
+    representations = relationship('Entity', secondary=edge_entities, backref="synonyms")
+    # An edge's applications come from the `edged` backref on Application
+
+    def dict(self, verbose=False):
+        edge = super(Edge, self).dict()
+        if verbose:
+            edge['source'] = self.source.dict()
+            edge['target'] = self.target.dict()
+            edge['entities'] = [e.dict() for e in self.entities]
+            edge['applications'] = [a.dict() for a in self.applications]
+        return edge
 
 
 class Entity(core.Base):
@@ -112,19 +132,18 @@ class Entity(core.Base):
     created = Column(DateTime(timezone=False), default=datetime.utcnow,
                      nullable=False)
     modified = Column(DateTime(timezone=False), default=None)
-
-
-class Metadata(core.Base):
-    """An optimization to allow users to annotate remote entities with metadata,
-    without making queries against entities slower"""
-
-    __tablename__ = "metadata"
-
-    id = Column(BigInteger, primary_key=True)
-    entity_id = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     data = Column(JSON)
-    created = Column(DateTime(timezone=False), default=datetime.utcnow,
-                     nullable=False)
+
+    def dict(self, verbose=False):
+        entity = super(Entity, self).dict()
+        entity['remoteIds'] = [r.dict() for r in self.remote_ids]
+        if verbose:            
+            entity['edges'] = {
+                'parents': [i.dict(verbose=True) for i in self.incoming_edges],
+                'children': [o.dict(verbose=True) for o in self.outgoing_edges]
+                }
+        return entity
+
 
 for model in core.Base._decl_class_registry:
     m = core.Base._decl_class_registry.get(model)

@@ -65,15 +65,14 @@ class BaseMixin(object):
             return obj
 
         cause = dict(kwargs) if kwargs else list(args)
-        raise GrooveboxException(
+        raise W2gException(
             "Failed to get %s: %s" % (cls.__name__, cause),
             cause=list(cause.keys()) if kwargs else cause)
     
     def __repr__(self):
         return str(self.dict())
     
-
-    def dict(self):
+    def dict(self, **kwargs):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
     def remove(self, commit=True):
@@ -109,7 +108,7 @@ class BaseMixin(object):
         """
         pid = getattr(self, self.PKEY, '')
         if not pid:
-            raise GrooveboxException(
+            raise w2gException(
                 "Save operation requires primary key to be unset, "
                 "i.e. record must alreay exist")
         self.save_hook()
@@ -120,7 +119,7 @@ class BaseMixin(object):
         if update:
             pid = getattr(self, self.PKEY)  # TODO: make sure pid setattr
             if not self.exists(**{self.PKEY: pid}):
-                raise GrooveboxException(
+                raise w2gException(
                     "Unable to save/update to %s entity with %s: %s. "
                     "Entry must first be created."
                     % (self.TBL, self.PKEY, pid))
