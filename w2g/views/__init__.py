@@ -56,8 +56,8 @@ def paginate(limit=100, dump=lambda i, **opts: i.dict(**opts), **options):
     """Decorator for returning paginated json data"""
     def outer(f):
         def inner(self, cls, *args, **kwargs):
-            _limit = min(request.args.get("limit", limit), limit)
-            _offset = request.args.get("page", 0) * _limit
+            _limit = min(int(request.args.get("limit", limit)), limit)
+            _offset = int(request.args.get("page", 0)) * _limit
             query = f(self, cls, *args, **kwargs)
             items = query.limit(_limit).offset(_offset).all()
             # consider returning total obj count and/or current limit + page
@@ -69,7 +69,7 @@ def paginate(limit=100, dump=lambda i, **opts: i.dict(**opts), **options):
 def search(model, limit=50, lazy=True):
     query = request.args.get('query')
     field = request.args.get('field')
-    limit = min(request.args.get('limit', limit), limit)
+    limit = min(int(request.args.get('limit', limit)), limit)
     if all([query, field, limit]):
         return model.search(query, field=field, limit=limit, lazy=lazy)
     raise ValueError('Query and field must be provided. Valid fields are: %s' \

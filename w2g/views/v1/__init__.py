@@ -28,6 +28,14 @@ class Record(MethodView):
     def get(self, cls, id):
         return graph.core.models[cls].get(id).dict(verbose=True)
 
+    @rest
+    def put(self, cls, id):
+        c = graph.core.models[cls].get(id)
+        for k, v in request.form.items():
+            setattr(c, k, v)
+        c.save()
+        return c.dict(verbose=True)
+
 
 class Page(MethodView):
 
@@ -44,6 +52,23 @@ class Page(MethodView):
         c.create()
         return c.dict()
 
+
+class EntityResources(MethodView):
+
+    @rest
+    def get(self, id):
+        e = graph.Entity.get(id)
+        return {'resources': [r.dict() for r in e.resources]}
+
+
+    @rest
+    def post(self, id):
+        e = graph.Entity.get(id)
+        e.resources.append(graph.Resource.get(request.form.get('resource_id')))
+        e.save()
+        return e.dict()                           
+
+
 class Database(MethodView):
     """Download a snapshot of the database"""
     pass
@@ -56,8 +81,21 @@ class Index(MethodView):
         return {"endpoints": graph.core.models.keys()}
 
 
+class Merge(MethodView):
+    @rest
+    def get(self, a, b):
+        e1 = graph.Entity.get(a)
+        e2 = graph.Entity.get(b)
+        # Preserve data
+        r = graph.RemoteId(entity_id=e1.id)
+        graph.db.expunge(r)
+        graph.db.expunge(e1)
+        graph.db.commit()
+
 
 urls = (
+    '/merge/<int:a>/<int:b>', Merge,
+    '/entities/<int:id>/resources', EntityResources,
     '/<cls>/<int:id>', Record,
     '/<cls>', Page,
     '/db', Database,

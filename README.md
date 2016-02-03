@@ -97,3 +97,5 @@ Any website in the world can tap into the global graph (CORs is enabled on the A
     <script type="text/javascript" src="https://graph.global/static/assets/graph.js"></script>
 
 By including graph.js in your website, any html tag which references a w2g entity will be resolved and rendered as a w2g tag (additionally with correct schema.org markup). By default, a tag has minimal style, like a link / anchor tag. It is distincly colored (green, instead of blue) and italicized by the cite tag (instead of underlined)
+
+

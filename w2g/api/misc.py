@@ -28,3 +28,13 @@ class Resource(core.Base):
     id = Column(BigInteger, primary_key=True)
     eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     body = Column(Unicode, unique=True, nullable=False) # url; content published elsewhere (S3)
+
+
+class Checkin(core.Base):
+
+    __tablename__ = "checkins"
+
+    id = Column(BigInteger, primary_key=True)
+    entity_id = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
+    created = Column(DateTime(timezone=False), default=datetime.utcnow,
+                     nullable=False)    

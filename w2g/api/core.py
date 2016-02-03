@@ -68,6 +68,10 @@ class BaseMixin(object):
         raise W2gException(
             "Failed to get %s: %s" % (cls.__name__, cause),
             cause=list(cause.keys()) if kwargs else cause)
+
+    @classmethod
+    def all(cls):
+        return cls.query.all()
     
     def __repr__(self):
         return str(self.dict())
