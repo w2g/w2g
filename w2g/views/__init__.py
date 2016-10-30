@@ -58,6 +58,8 @@ def paginate(limit=100, dump=lambda i, **opts: i.dict(**opts), **options):
         def inner(self, cls, *args, **kwargs):
             _limit = min(int(request.args.get("limit", limit)), limit)
             _offset = int(request.args.get("page", 0)) * _limit
+            verbose = bool(int(request.args.get("verbose", 0)))
+            options['verbose'] = verbose
             query = f(self, cls, *args, **kwargs)
             items = query.limit(_limit).offset(_offset).all()
             # consider returning total obj count and/or current limit + page

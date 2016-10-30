@@ -69,6 +69,50 @@ class EntityResources(MethodView):
         return e.dict()                           
 
 
+class EntityDelete(MethodView):
+
+    @rest
+    def get(self, id):
+        e = graph.Entity.get(id)
+        e.remove()
+
+class EntityEdges(MethodView):
+
+    @rest
+    def get(self, id=None):
+        e = graph.Entity.get(id)
+        return {'edges': e.dict(verbose=True)['edges']}
+
+    @rest
+    def post(self, id):
+        source = graph.Entity.get(id)
+        relation_eid = request.form.get('relation_eid')
+        target_eid = request.form.get('target_eid')
+        e = graph.Edge(
+            source_eid=source.id,
+            relation_eid=relation_eid,
+            target_eid=target_eid
+            )
+        e.create()
+        return e.dict()
+
+
+class Edge(MethodView):
+
+    @rest
+    def get(self, id=None):
+        e = graph.Edge.get(id)
+        return e.dict()
+
+
+class EdgeDelete(MethodView):
+
+    @rest
+    def get(self, id=None):
+        e = graph.Edge.get(id)
+        return e.remove()
+
+
 class Database(MethodView):
     """Download a snapshot of the database"""
     pass
@@ -96,6 +140,10 @@ class Merge(MethodView):
 urls = (
     '/merge/<int:a>/<int:b>', Merge,
     '/entities/<int:id>/resources', EntityResources,
+    '/edges/<int:id>/delete', EdgeDelete,
+    '/edges/<int:id>', Edge,
+    '/entities/<int:id>/edges', EntityEdges,
+    '/entities/<int:id>/delete', EntityDelete,
     '/<cls>/<int:id>', Record,
     '/<cls>', Page,
     '/db', Database,

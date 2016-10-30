@@ -28,9 +28,8 @@ def build_tables():
     MetaData().create_all(engine)
 
 
-"""Used for naming edges: Associates a directed edge with an
-entity. Challenge: How is this different than Context?"""
-edge_entities = \
+"""Used for naming/aliasing specific Edges with Entity"""
+definitions = \
     Table('edges_to_entities', core.Base.metadata,
           Column('id', BigInteger, primary_key=True),
           Column('entity_id', BigInteger,
@@ -39,12 +38,43 @@ edge_entities = \
                  ForeignKey('edges.id'), nullable=False)
           )
 
-"""The same Resource may be associated with `n` entities"""
+"""The same Resource may be associated with `n` different entities"""
 resource_entities = \
     Table('resources_to_entities', core.Base.metadata,
           Column('id', BigInteger, primary_key=True),
           Column('entity_id', BigInteger,
                  ForeignKey('entities.id'), nullable=False),
+          Column('resource_id', BigInteger,
+                 ForeignKey('resources.id'), nullable=False)
+          )
+
+"""The same Task may be associated with `n` different entities (keywords/tags)"""
+task_entities = \
+    Table('tasks_to_entities', core.Base.metadata,
+          Column('id', BigInteger, primary_key=True),
+          Column('entity_id', BigInteger,
+                 ForeignKey('entities.id'), nullable=False),
+          Column('resource_id', BigInteger,
+                 ForeignKey('tasks.id'), nullable=False)
+          )
+
+
+"""Allows a checkin to attach resource bookmarks (placekeeping)"""
+checkin_bookmarks = \
+    Table('checkins_to_bookmarks', core.Base.metadata,
+          Column('id', BigInteger, primary_key=True),
+          Column('checkin_id', BigInteger,
+                 ForeignKey('checkins.id'), nullable=False),
+          Column('bookmark_id', BigInteger,
+                 ForeignKey('bookmarks.id'), nullable=False)
+          )
+
+"""The same Resource may be associated with `n` edges"""
+resource_edges = \
+    Table('resources_to_edges', core.Base.metadata,
+          Column('id', BigInteger, primary_key=True),
+          Column('edge_id', BigInteger,
+                 ForeignKey('edges.id'), nullable=False),
           Column('resource_id', BigInteger,
                  ForeignKey('resources.id'), nullable=False)
           )
@@ -64,9 +94,23 @@ class RemoteId(core.Base):
 
 
 class Context(core.Base):
-    """Contexts are Entities which represent a semantic group
-    of related edges. It associates directed edges to a specific
-    topic, category, problem-space, or application like math.mx or the-foundation.
+    """Contexts are a way to define discrete subsets of an Entity's
+    Edges whose interpretation is unique to a specific domain or
+    topic.
+
+    As a data structure, a Context is a mapping between a semantic
+    grouping of Edges and an Entity (a label / identifier).
+
+    An Entity may either be viewed globally (context-free), or one may
+    filter/retrieve a subset of the Entity's graph which includes only
+    its Edges pertaining to a specific context. Many entities may
+    implement/define the same Contexts (which may result in confusion
+    if a Context itself has different interpretations, depending on
+    the Edge's source).
+
+    Contexts are a convenient way for people to create their own
+    projects, applications, and domain sepcific taxonomies without
+    forcing their Entity relations on a global level.
     """
 
     __tablename__ = "contexts"
@@ -100,7 +144,7 @@ class Source(core.Base):
     url = Column(Unicode, unique=True)  # see vendors.py
     entity = relationship('Entity')
 
-    def dict(self):
+    def dict(self, verbose=False):
         source = super(Source, self).dict()
         source['entity'] = self.entity.dict()
         return source
@@ -125,16 +169,23 @@ class Edge(core.Base):
 
     # This edge, the (source, relation, target) 3-tuple, can be
     # represented/described as the following entities
-    names = relationship('Entity', secondary=edge_entities, backref="synonyms")
+    names = relationship('Entity', secondary=definitions, backref="synonyms")
     # An edge's contexts come from the `edged` backref on Context
+
+    resources = relationship('Resource', secondary=resource_edges,
+                             backref="edges")
 
     def dict(self, verbose=False):
         edge = super(Edge, self).dict()
+        edge['entities'] = [e.dict() for e in self.entity] \
+            if self.entity else None
         if verbose:
             edge['source'] = self.source.dict()
             edge['target'] = self.target.dict()
-            edge['entities'] = [e.dict() for e in self.entities]
+            edge['relation'] = self.relation.dict()
+            edge['resources'] = [r.dict() for r in self.resources]
             edge['contexts'] = [c.dict() for c in self.contexts]
+            edge['names'] = [e.dict() for e in self.names]
         return edge
 
 
@@ -145,31 +196,37 @@ class Entity(core.Base):
     id = Column(BigInteger, primary_key=True)
     name = Column(Unicode, nullable=False)
 
+    relation_id = Column(BigInteger, ForeignKey('edges.id'), default=None)
+
     # creator = Column(BigInteger, ForeignKey('users.id'))
     created = Column(DateTime(timezone=False), default=datetime.utcnow,
                      nullable=False)
     modified = Column(DateTime(timezone=False), default=None)
     avatar = Column(Unicode)
     data = Column(JSON)
-    
+
     resources = relationship('Resource', secondary=resource_entities,
-                             backref="entities")
+                             backref="tags")
+    as_edge = relationship('Edge', primaryjoin="Entity.relation_id == Edge.id",
+                           backref='entity')
 
     def dict(self, verbose=False):
         entity = super(Entity, self).dict()
         entity['remoteIds'] = [r.dict() for r in self.remote_ids]
-        if verbose:            
-            children = self.outgoing_edges
+        if verbose:
+            entity['as_edge'] = self.as_edge.dict(verbose=True) if self.as_edge else None
             entity['edges'] = {
                 'parents': [i.dict(verbose=True) for i in self.incoming_edges],
-                'children': [o.dict(verbose=True) for o in children]
+                'relations': [r.dict(verbose=True) for r in self.relations],
+                'children': [o.dict(verbose=True) for o in self.outgoing_edges]
                 }
             entity['resources'] = [r.dict() for r in self.resources]
-            #entity['contexts'] = [c.dict() for c in children.contexts]
         return entity
 
 
 class Resource(core.Base):
+
+    """XXX: Deprecate, just use entity + edge"""
 
     __tablename__ = "resources"
 
@@ -182,13 +239,16 @@ class Resource(core.Base):
                      nullable=False)
 
 
-class Checkin(core.Base):
+class Bookmark(core.Base):
+    """Keeps track of where you left off in a resource"""
 
-    __tablename__ = "checkins"
+    __tablename__ = "bookmarks"
 
     id = Column(BigInteger, primary_key=True)
+
     resource_id = Column(BigInteger, ForeignKey('resources.id'), nullable=False)
-    # activity_id = Column(BigInteger, ForeignKey('activities.id'), nullable=False)
+    # user_id = ... # a bookmark is associated with a user
+
     start_time = Column(DateTime(timezone=False), default=None)
     end_time = Column(DateTime(timezone=False), default=None)
     quantity = Column(Integer)  # Check in an amount of this entity
@@ -199,6 +259,29 @@ class Checkin(core.Base):
     resource = relationship('Resource', backref='checkins')
 
 
+class Checkin(core.Base):
+    """A checkin may attach zero or more bookmarks"""
+
+    __tablename__ = "checkins"
+
+    id = Column(BigInteger, primary_key=True)    
+    task_id = Column(BigInteger, ForeignKey('tasks.id'), nullable=False)
+    note = Column(Unicode)
+    created = Column(DateTime(timezone=False), default=datetime.utcnow,
+                     nullable=False)
+
+
+class Task(core.Base):
+
+    __tablename__ = "tasks"
+
+    id = Column(BigInteger, primary_key=True)    
+    title = Column(Unicode)
+    start = Column(DateTime(timezone=False), default=None)
+    end = Column(DateTime(timezone=False), default=None)
+    created = Column(DateTime(timezone=False), default=datetime.utcnow,
+                     nullable=False)
+    
 
 for model in core.Base._decl_class_registry:
     m = core.Base._decl_class_registry.get(model)
