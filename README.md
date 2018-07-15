@@ -1,6 +1,6 @@
 # w2g
 
-The World Wide Graph
+The World Wide Graph: A simple, collaborative, semantic graph database for the entire web to share.
 
 * [Introduction](#introduction)
 * [Installing w2g (Server)](#getting-started)
@@ -8,6 +8,51 @@ The World Wide Graph
 * [Data Structures](#data-structures)
 * [Privacy, Security & Conflicts of Interest](#privacy-security--conflicts-of-interest)
 * [Using the Graph API (Clients)](#consuming-the-graph)
+
+
+## Why not Wikidata?
+
+Wikidata is a perfect example of a project which could use a w2g (not that I'm recommending they do). The point of w2g is to white-label the functionality of Wikidata and make it as light-weight and as simple/easy as possible for others to adapt for their own use cases. There should be many systems like Wikidata. And they should all enforce their own guidelines and rules for quality, but most importantly, they should be designed to interoperate with each other as a first principle.
+
+In fact, there already are several systems like Wikidata in existence today. Google has their own Knowledge Graph. Facebook has its Open Graph. And few of these systems are designed to allow a user to query across systems.
+
+## A Shared Knowledge-Base for the Web
+
+W2g means World Wide Graph. It aims to be a collaborative graph database of the world's knowldge, similar to Wikidata, which can be written to and read from by any person or page on the world wide web. The idea (while independently conceived) is almost synonymous with Tim Berners-Lee's [Giant Global Graph](https://en.wikipedia.org/wiki/Giant_Global_Graph).
+
+A limitation of the World Wide Web is that each website operates independently within their own little silos. Data on one website can't be easily accessed by another website except through fragile, bespoke (rest) APIs. Connecting one website to another isn't automatic and often requires separate integration for each additional website or service which is to be attached. 
+
+Once and a while, a platform like Wikipedia or Facebook will come along and pioneers their own layer over the world wide web, adding essential functionality and/or order. In a sense, its almost as if they are creating their own web-within-a-web: their own separate version of the web which may apply to all their pages but not beyond their domain. For Facebook and Twitter, this might manifest as the novel ability to auto-complete and tag your friends in order to associate them with or alert them of content. Twitter and Facebook each have their own database of tags which are only relevant within their own respective services. This results in users end up having numerous fragmented identities across facebook, twitter, github, and all their other online presences. Wikipedia, while wonderful, has a similar problem. Wikipedia links primarily point to other blessed wikipedia articles within wikipedia. But there are millions of websites all across the web who are talking about the very same topics which can't easily connect / resolve to   
+
+
+W2g offers an alternative approach, where a common, public/open database with a well defined interface, is made available to website which wishes to attach and read or contribute knowledge.
+
+There doesn't need to be just one w2g -- in fact, there probably shouldn't be. Different World Wide Graphs could and should emerge to serve different communities and needs.
+
+
+## What's with the Green Text?
+
+The World Wide Web Consortium (W3C) is the de facto international working group responsible for developing Web standards. They work with stakeholders and arrive at agreements, such as a hypertext link should be blue and underlined and then become purple after its visited.
+
+W2g isn't so fancy as to be anything worth acknowledging by the W3C (we'd be lucky to make it into the W2C -- which is a fictional thing with one less "W" that doesn't exist; I'm making a joke. Ha ha) however, w2g similary share the belief that working together, participating in thoughtful public discussion, and documenting standards are useful and important practices. And so it is with this spirit that w2g proposes its own minimal set of primitives, which are hopefully compatible with and complimentary to the W3C's existing standards.
+
+The fundamental primitive of w2g is the `<cite>` tag. `<cite>` was chosen because it doesn't have any pre-existing default functionality (e.g. whereas a link is clickable). It adds consistent semantic value, in that an entity is being cited within the tag. It can be combined with, but avoids conflating itself with an `<a>` anchor tag. It adds to an existing w3c tag without trying to introduce an entirely new foreign primitive.
+
+A w2g `<cite>` tag identifies/distinguishes itself in css by have a `w2gid` property -- i.e. `cite[w2gid]`. Within HTML, this looks something like `<cite w2gid="123">`. w2g `<cite>` tags are given a few affordances beyond how the browser generally renders them. A `w2g <cite>` tag has minimal style whose emphasis is intended to be consistent to that of an anchor tag. It is distincly colored (green #008000, instead of blue #0000ff) and italicized by the cite tag (instead of underlined).
+
+Finally, and most controversially, a w2g `cite[w2gid]` instance is invoked via the "right click" action or a long hold. This functionality can alternatively be achieved, if desired, on desktop through `:hover`ing. When clicked, a `cite[w2gid]` tag will bring the user to https://graph.global/?id=XXX (or some other w2g instance) where `XXX` is the `w2gid` property value. 
+
+
+
+
+## Principles
+
+Persistence. Identity. Deduplication.
+
+
+## Inspiration
+
+This project is inspired by Freebase & Wikidata, [Ted Nelson's ZigZag](http://xanadu.com/zigzag), Facebook & twitter semantic tags, and most importantly, the Memex as described within [Vannevar Bush's, "As We May Think"](https://www.theatlantic.com/magazine/archive/1945/07/as-we-may-think/303881/). For additional context, consider reading [Alex Wright's, "GLUT: Mastering Information Through the Ages"].
 
 ## Introduction
 
