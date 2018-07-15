@@ -6,11 +6,11 @@ The World Wide Graph: A simple, collaborative, semantic graph database for the e
     * [Inspiration](#inspiration)
     * [Limitations of the Web](#limitations-of-the-web)
     * [Principles & Philosophy](#principles--philosophy)
-* [Developer's Guide]
+* [Developer's Guide](#developers-guide)
     * [Installing w2g (Server)](#installation)
     * [Run w2g server](#run-w2g-server)
     * [Data Structures](#data-structures)
-* [User's Manual]
+* [User's Manual](#users-manual)
     * [Using Graph.global](#using-graph-global)
     * [Green Text](#green-text)
     * [Using the Graph API (Clients)](#consuming-the-graph)
@@ -113,7 +113,7 @@ Once your database and user have been created, and the user has the correct perm
 
 ## Data Structures
 
--- **`entities`**: primitives of the system; generally people, places, things, actions, thoughts, categorizations, or relational descriptors (like `friends with`).
+- **`entities`**: primitives of the system; generally people, places, things, actions, thoughts, categorizations, or relational descriptors (like `friends with`).
 
 - **`edges`** are directed relationships (often dependencies) between two `entities`. Edges themselves can be associated with / represent an entity (have a relation_eid). Basically, think RDF triples.
 
