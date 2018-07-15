@@ -3,18 +3,29 @@
 The World Wide Graph: A simple, collaborative, semantic graph database for the entire web to share.
 
 * [Introduction](#gentle-introduction)
-* [Limitations of the Web](#limitations-of-the-web)
-* [Installing w2g (Server)](#getting-started)
-* [Goals & Philosophy](#goals--philosophy)
-* [Data Structures](#data-structures)
+    * [Inspiration](#inspiration)
+    * [Limitations of the Web](#limitations-of-the-web)
+    * [Principles & Philosophy](#principles--philosophy)
+* [Developer's Guide]
+    * [Installing w2g (Server)](#installation)
+    * [Run w2g server](#run-w2g-server)
+    * [Data Structures](#data-structures)
+* [User's Manual]
+    * [Using Graph.global](#using-graph-global)
+    * [Green Text](#green-text)
+    * [Using the Graph API (Clients)](#consuming-the-graph)
+* [Contributing](#contributing)
 * [Privacy, Security & Conflicts of Interest](#privacy-security--conflicts-of-interest)
-* [Using the Graph API (Clients)](#consuming-the-graph)
 
-## Introduction
+# Introduction
 
 **A Simple Shared Knowledge-Base for the Web**. The World Wide Graph (w2g) aims to become a global, collaborative (wiki-like), semantic graph database of unique entities (people, places, events, things), like Wikidata, which is accessible and can be written to and read from by any person or page on the world wide web. 
 
 It aims to aggregate and entity resolve entities from/across existing graph / knowledge-base services, like Wikidata, Freebase, Google Knowledge Graph, Facebook Open Graph, as well as provides its own database (for creating new entities which don't align with these services -- e.g. Wikidata doesn't allow "unnotable" names of people -- or for when one of these services is read only and needs to be extended).
+
+## Inspiration
+
+This project is inspired by Freebase & Wikidata, [Ted Nelson's ZigZag](http://xanadu.com/zigzag), Facebook & twitter semantic tags, and most importantly, the Memex as described within [Vannevar Bush's, "As We May Think"](https://www.theatlantic.com/magazine/archive/1945/07/as-we-may-think/303881/). For additional context, consider reading [Alex Wright's, "GLUT: Mastering Information Through the Ages"]. W2g (while independently conceived) is almost synonymous with Tim Berners-Lee's [Giant Global Graph](https://en.wikipedia.org/wiki/Giant_Global_Graph).
 
 ## Limitations of the Web
 
@@ -34,11 +45,7 @@ In fact, there already are several systems like Wikidata in existence today. Goo
 
 Most of these systems aren't open. That means, the data requires special privileged keys to access. Wikidata is open but it has notability policies which make it difficult for people to use it for anything other than the Wikidata community decides. The platform which runs Wikidata could be repurposed and white-labeled (in almost an identical fashion as w2g is trying to achieve), but the code-base is so sufficiently complex, that it seemed prudent to start with a simple, minimalist prototype that anyone could easily get up and running and adapt to their needs. Wikidata provides a bunch of functionality which is beyond the scope of the core value propositions w2g hopes to highlight, and I'd hate for its mission to be drowned out by Wikidata's added complexity.
 
-## Inspiration
-
-This project is inspired by Freebase & Wikidata, [Ted Nelson's ZigZag](http://xanadu.com/zigzag), Facebook & twitter semantic tags, and most importantly, the Memex as described within [Vannevar Bush's, "As We May Think"](https://www.theatlantic.com/magazine/archive/1945/07/as-we-may-think/303881/). For additional context, consider reading [Alex Wright's, "GLUT: Mastering Information Through the Ages"]. W2g (while independently conceived) is almost synonymous with Tim Berners-Lee's [Giant Global Graph](https://en.wikipedia.org/wiki/Giant_Global_Graph).
-
-## Goals & Philosophy
+## Principles & Philosophy
 
 Openness. Collaboration. Interoperability. Persistence. Decentralization. Universal Identity. Deduplication. 
 
@@ -48,24 +55,13 @@ Openness. Collaboration. Interoperability. Persistence. Decentralization. Univer
 https://graph.global is my pilot instance of w2G and I imagine it could work similarly to Wikipedia + Wikidata.
 Many interoperable w2gs may emerge and run in parallel which each serve unique community needs.
 
-## Get Involved
-
-Want to be on the committee? Email michael.karpeles@gmail.com to help
-
-## Privacy, Security & Conflicts of Interest
-
-W2g is an open source, non-profit initiative. I'm mostly building it as a convenient programatic interface for establishing dependency graphs between entities which already exist on disprate remote services. 
 
 # Developers Guide
 
-## Getting Started
-
-### Prerequisites
+## Installation
 
 * **Python.** w2g requires python2.7 or python3.4. Note: there are some features (e.g. the /admin sqlalchemy CMS interface -- 2.7 only) which have dependencies which are only available for either 2.7 or 3.4.
 * **Postgresql 9.4** e.g. postgresql-9.4 postgresql-server-dev-9.4 (aptitude)
-
-### Installation
 
     $ git clone https://github.com/w2g/w2g.git
     $ cd w2g
@@ -110,7 +106,7 @@ Once your database and user have been created, and the user has the correct perm
     >>> import api
     >>> api.core.Base.metadata.create_all(api.engine)  # creates tables from sqlalchemy models in api.graph.py
 
-### Run w2g server
+## Run w2g server
 
     $ python app.py
     * Running on http://0.0.0.0:8080/ (Press CTRL+C to quit)
@@ -122,6 +118,34 @@ Once your database and user have been created, and the user has the correct perm
 - **`edges`** are directed relationships (often dependencies) between two `entities`. Edges themselves can be associated with / represent an entity (have a relation_eid). Basically, think RDF triples.
 
 - **`contexts`**: w2g plans on adding the ability to add any number of `context` tag(s) to `relation`s. e.g. It may be important to you that `Mek` <> `friends with` <> `Drew` only matters within the `context` of `Mek's Friends` and someone else may want to ignore these queries if we're sharing the same global graph. You can think of `context`s like isolated groups of edges you can control / restrict to your application or preferences. For instance, one can establish a `context` of `Inventions` whose intent is to create a dependency graph which demonstrates how to axiomatically build an invention. One can then establish an edge between and entity `Electric Generator` and `Magnet`. Thought of another way, `contexts` are named semantic groups (name comes from the entity it represents) under which a set of `edges` are applicable. For instance, an `edge` representing the entity (property) `derivation` may be created between and entity named `Rational` and an entity named `Ratio` within the context of the entity `Etymology`. However, consider someone else may be instead instead in comparing the relationship of these entities as mathematical terms.
+
+# User's Manual
+
+## Using Graph.global
+
+When you first get to graph.global, type in the text input box to perform a search for any w2g `entity`.  
+
+https://www.facebook.com/michael.karpeles/videos/10102705021806480/
+
+### Selection
+
+Once you're on a view with `entities`, the `up` and `down` arrows can be used to cycle the selected `entity`.
+
+### Navigation
+
+To enter / drill down into an `entity`, use the right key. The left key will roll-up and leave the `entity`.
+
+### Creating new Entities
+
+`Ctrl + Enter` is used to create a new `entity`.
+
+### Establishing Edges
+
+An `edge` is an RDF-style triple like `w2g` `Also called` `World Wide Graph (w2g)`. When you're on an `entity` page, e.g. the one for `w2g`, you can use the two input boxes to create an `edge`. Use the first input box to search for an `entity` which describes the relationship you're trying to establish -- e.g. is `Also called`. **Important:** this relation `entity` must already exist in your w2g entity or things will break fantastically (this is a bug, not intended behaviour). Use broken / awkardly positioned (upper left hand corner) autocomplete box to find this pre-existing entity, select it with your mouse, and then use the tab key or click into the 2nd input box. Use this box to lookup an existing node which completes the relation: `w2g` `Also called` `?`. In this example, it would be `World Wide Graph (w2g)`. Unlike the first text box, if you type an `entity` which doesn't exist, it will be created. If done correctly you should see a new relationship represented on the `entity`'s page.
+
+### Reification
+
+To be explained in a following video. This basically allows you to take an `edge` relationship (an RDF triple of `entities`) and alias it with another `entity`. e.g. `Mek` `friends` `Drew` may be reified into `The Friendship of Mek and Drew` (which will be entered as new `entity` node in your w2g db and associated with the original `edge` via a many-to-many table.
 
 ## Green Text
 
@@ -137,7 +161,6 @@ A w2g `<cite>` tag identifies/distinguishes itself in css by have a `w2gid` prop
 
 Finally, and most controversially, a w2g `cite[w2gid]` instance is invoked via the "right click" action or a long hold. This functionality can alternatively be achieved, if desired, on desktop through `:hover`ing. When clicked, a `cite[w2gid]` tag will bring the user to https://graph.global/?id=XXX (or some other w2g instance) where `XXX` is the `w2gid` property value. 
 
-
 ## Consuming the Graph
 
 Any website in the world can tap into the global graph (CORs is enabled on the API). Doing so is as easy as importing a single javascript library, just like google analytics. Spoiler: The javascript library [graph.js](https://github.com/w2g/graph.js) doesn't exactly exist yet but it will be (optionally) served via some cdn, such as:
@@ -146,4 +169,10 @@ Any website in the world can tap into the global graph (CORs is enabled on the A
 
 By including graph.js in your website, any html tag which references a w2g entity will be resolved and rendered as a w2g tag (additionally with correct schema.org markup). By default, a tag has minimal style, like a link / anchor tag. It is distincly colored (green, instead of blue) and italicized by the cite tag (instead of underlined)
 
+# Contributing
 
+Want to be on the committee? Email michael.karpeles@gmail.com to help
+
+# Privacy, Security & Conflicts of Interest
+
+W2g is an open source, non-profit initiative. I'm mostly building it as a convenient programatic interface for establishing dependency graphs between entities which already exist on disprate remote services. 
