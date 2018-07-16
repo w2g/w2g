@@ -25,7 +25,7 @@ If I hit /foo I want a list of all edges for a Collection
 
 class Record(MethodView):
     @rest
-    def get(self, cls, id):
+    def get(self, cls, id):        
         return graph.core.models[cls].get(id).dict(verbose=True)
 
     @rest
@@ -44,6 +44,8 @@ class Page(MethodView):
     def get(self, cls):
         if request.args.get('action') == 'search':
             return search(graph.core.models[cls])
+        if request.args.get('action') == 'leaderboard':
+            return graph.core.models[cls].leaderboard(limit=10)
         return graph.db.query(graph.core.models[cls])
 
     @rest

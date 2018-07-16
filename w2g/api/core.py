@@ -136,8 +136,9 @@ class BaseMixin(object):
             raise e
 
     @classmethod
-    def get_several(cls, ids):
-        return db.query(cls).filter(cls.id.in_(ids)).all()
+    def get_several(cls, ids, query=False):
+        results = db.query(cls).filter(cls.id.in_(ids))
+        return results if query else results.all()
 
     @classmethod
     def exists(cls, *args, **kwargs):

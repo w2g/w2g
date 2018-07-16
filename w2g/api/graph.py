@@ -223,6 +223,10 @@ class Entity(core.Base):
             entity['resources'] = [r.dict() for r in self.resources]
         return entity
 
+    @classmethod
+    def leaderboard(cls, limit=10):
+        top_entities = db.execute("WITH entities AS (SELECT source_eid entity FROM edges UNION ALL SELECT relation_eid entity FROM edges UNION ALL SELECT target_eid  entity FROM edges), top_entities AS (SELECT entity , count(*) FROM entities GROUP BY 1 ORDER BY 2 desc) SELECT * FROM top_entities LIMIT (%s)" % limit)
+        return cls.get_several([entity[0] for entity in top_entities], query=True)
 
 class Resource(core.Base):
 
