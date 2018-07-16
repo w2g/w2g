@@ -2,7 +2,7 @@
 
 The World Wide Graph: A simple, collaborative, semantic graph database for the entire web to share.
 
-* [Introduction](#gentle-introduction)
+* [Introduction](#introduction)
     * [Inspiration](#inspiration)
     * [Limitations of the Web](#limitations-of-the-web)
     * [Principles & Philosophy](#principles--philosophy)
