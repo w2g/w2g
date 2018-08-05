@@ -2,6 +2,8 @@
 
 The World Wide Graph: A simple, collaborative, semantic graph database for the entire web to share.
 
+This is the source for https://graph.global/v1/ (the API backend). For the front-end user interface, see https://github.com/w2g/graph.global.
+
 * [Introduction](#introduction)
     * [Inspiration](#inspiration)
     * [Limitations of the Web](#limitations-of-the-web)
@@ -57,6 +59,8 @@ Many interoperable w2gs may emerge and run in parallel which each serve unique c
 
 
 # Developers Guide
+
+This is the code for the graph.global API server. 
 
 ## Installation
 
