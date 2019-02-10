@@ -12,6 +12,7 @@ This is the source for https://graph.global/v1/ (the API backend). For the front
     * [Installing w2g (Server)](#installation)
     * [Run w2g server](#run-w2g-server)
     * [Data Structures](#data-structures)
+* [Javascript API](#javascript-api)
 * [User's Manual](#users-manual)
     * [Using Graph.global](#using-graph-global)
     * [Green Text](#green-text)
@@ -122,6 +123,12 @@ Once your database and user have been created, and the user has the correct perm
 - **`edges`** are directed relationships (often dependencies) between two `entities`. Edges themselves can be associated with / represent an entity (have a relation_eid). Basically, think RDF triples.
 
 - **`contexts`**: w2g plans on adding the ability to add any number of `context` tag(s) to `relation`s. e.g. It may be important to you that `Mek` <> `friends with` <> `Drew` only matters within the `context` of `Mek's Friends` and someone else may want to ignore these queries if we're sharing the same global graph. You can think of `context`s like isolated groups of edges you can control / restrict to your application or preferences. For instance, one can establish a `context` of `Inventions` whose intent is to create a dependency graph which demonstrates how to axiomatically build an invention. One can then establish an edge between and entity `Electric Generator` and `Magnet`. Thought of another way, `contexts` are named semantic groups (name comes from the entity it represents) under which a set of `edges` are applicable. For instance, an `edge` representing the entity (property) `derivation` may be created between and entity named `Rational` and an entity named `Ratio` within the context of the entity `Etymology`. However, consider someone else may be instead instead in comparing the relationship of these entities as mathematical terms.
+
+# Javascript API
+
+## Creating a new Entity
+
+You can do a POST to https://graph.global/v1/entities with a `data` payload of `{"name": "..."}` or from within the client, you can use `Entity.create({name: "..."}, callback)` with a callback, e.g. `Entity.create({name: "..."}, function(resp) {console.log(resp);})`.
 
 # User's Manual
 
