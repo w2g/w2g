@@ -55,7 +55,7 @@ setup(
         'Flask-Routing',
         'Flask-SuperAdmin',
         'flask-cors',
-        'psycopg2 >= 2.5.1',
+        'psycopg2 >= 2.7.5',
         'requests >= 1.2.3',
         'sqlalchemy >= 1.0.6',
         'graphene'
