@@ -1,0 +1,258 @@
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>mek.fyi | Edit</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+        <script src="https://mek.fyi/static/scripts/w2g.js" defer="defer"></script>
+        <script type="text/javascript" src="https://graph.global/static/js/api.js"></script>
+    </head>
+<style type="text/css">
+  body {
+    background-color: #e9ebee;
+    font-family: arial;
+    font-size: 13px;
+  }
+
+  #entities {
+    width: 400px;
+  }
+
+  .overlay {
+    position: fixed;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 100%;
+    width: 100%;
+    background-color: #000;
+    opacity: 0.8;
+    z-index: 2;
+  }
+
+  .editor {
+    display: flex;
+  }
+
+  .container {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background-color: #fff;
+    border-radius: 3px;
+    margin: 5px;
+  }
+
+  h2.container-title {
+    min-height: 20px;
+    font-size: inherit;
+    align-items: center;
+    margin: 0px;
+    display: flex;
+    font-weight: bold;
+    color: #333;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    padding: 5px 10px;
+  }
+
+  .container-title .title {
+    flex: 1;
+    margin: 0px 10px;
+  }
+  
+  .container-body {
+    padding: 10px;
+    font-size: .9em;
+  }
+
+  article {
+    width: 500px;
+  }
+
+  article input {
+    display: block;
+    padding: 5px;
+  }
+
+  article entity {
+    background-color: #4267b2;
+    padding: 2px;
+  }
+
+  #entities ul {
+    overflow: auto;
+    margin: 0px;
+    padding: 0px;
+  }
+  #entities ul li { 
+    white-space: wrap;
+    list-style-type: none;
+    padding: 10px;
+  }
+  #entities ul li:hover { 
+    background-color: #4267b2;
+  }
+
+  button.publish {
+    background-color: #365899;
+    border-color: #365899;
+    color: #fff;
+    width: 100%;
+  }
+
+  .selected {
+    background-color: #4267b2;
+  }
+</style>
+
+<script type="text/javascript">
+$(document).ready(function() {
+  var sel, range;
+  var MAGIC_KEY = '@';
+  var ENTER_KEY = 13;
+  var UP_KEY = 38;
+  var DOWN_KEY = 40;
+  var entities = document.querySelector("#entities ul");
+  var startTag = -1;
+  var endTag = -1;
+  var context = null;
+
+  $('#entities').on('mousedown', 'li', function(event) {
+    event.preventDefault()
+    selectTag($(this).text());
+  });
+
+  function post2html(p) {
+    return p.replace(/\[{2}([0-9]+)\:([\w.() ]+)\]{2}/g, '<cite w2gid="$1">$2</cite>');
+  }
+
+  $(document).on('mousedown', '.publish', function(event) {
+    event.preventDefault()
+    $('summary').empty();
+    $('summary').html(
+      '<h2>' + post2html($("article h2").text()) + '</h2>' +
+      '<p>' + post2html($("article section").text()) + '</p>'
+    );
+    
+  });
+
+  $(document).keydown(function(e) {
+    // TagMode: Select or Navigate Entities
+    if (startTag > -1 && [ENTER_KEY, UP_KEY, DOWN_KEY].includes(e.which)) {
+      e.preventDefault();
+      var first_tag = $('#entities ul li').first();
+      var last_tag = $('#entities ul li').last();
+      var this_li = $('#entities ul li.selected');
+
+      if (e.which == ENTER_KEY) {
+        return selectTag(this_li.text());
+      } else if (e.which == UP_KEY) {
+        (this_li.index() > 0 ? this_li.prev() : last_tag).addClass('selected');
+        this_li.removeClass('selected');
+      } else if(e.which == DOWN_KEY) {
+        (this_li.index() < $('#entities ul li').length-1 ? this_li.next() : first_tag).addClass('selected');
+        this_li.removeClass('selected');
+      }
+    }
+  });
+
+  $(document).keyup(function(e) {
+    context = document.activeElement;
+
+    // Detect TagMode
+    if (e.key == MAGIC_KEY) {
+      startTag = getCursorIndex();
+    }
+
+    // If we're in TagMode
+    if (startTag > -1) {
+
+      // Defer to TagMode overrides
+      if ([ENTER_KEY, UP_KEY, DOWN_KEY].includes(e.which)) {
+        e.preventDefault();
+        return;
+      }
+
+      endTag = getCursorIndex();
+      var tag = context.textContent.slice(startTag, endTag);
+      if (tag) {
+        Entity.search(tag, function(result) {
+          entities.innerHTML = '';
+          $(result.entities).each(function(index, entity) {
+            $(entities).append(
+              '<li>[[' + entity.id + ':' + entity.name + ']]</li>'
+            );
+          });
+          $(entities).append('<li>[[?:' + tag + ']]</li>');
+          $('#entities ul li').first().addClass('selected');
+        });
+      }
+    }
+  });
+
+  function insertTextAtCursor(text) {
+    if (window.getSelection) {
+        sel = window.getSelection();
+        if (sel.getRangeAt && sel.rangeCount) {
+            range = sel.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode( document.createTextNode(text) );
+            range.collapse(false);
+        }
+    } else if (document.selection && document.selection.createRange) {
+        document.selection.createRange().text = text;
+    }
+  }
+
+  function getCursorIndex() {
+    return window.getSelection().getRangeAt(0).startOffset;
+  }
+
+  function insertTag(entity) {
+    var range = document.createRange();
+    range.setStart(context.firstChild, startTag-1);
+    range.setEnd(context.firstChild, endTag);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    insertTextAtCursor(entity);
+    context.normalize();
+    reset();
+  }
+
+  function reset() {
+    startTag = -1;
+    endTag = -1;
+    entities.innerHTML = '';
+  }
+
+  function selectTag(tag) {
+    if (tag.startsWith('[[?:')) {
+      var txt = tag.slice(4, tag.length - 2);
+      Entity.create({name: txt}, function(data) {
+        tag = '[[' + data.id + ':' + txt + ']]';
+        insertTag(tag);
+      })
+    } else {
+      insertTag(tag);
+    }
+  }
+
+});
+</script>
+    <body>
+
+<div class="editor">
+  <article class="container">
+    <h2 contenteditable="true" class="container-title">Title</h2>
+    <section contenteditable="true" class="container-body"></section>
+    <button class="publish">Post</button>
+    <summary></summary>
+  </article>
+  <aside id="entities" class="container">
+    <h2 class="container-title">Knowledge Graph</h2>
+    <ul></ul>
+  </aside>
+</div>
