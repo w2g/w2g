@@ -2,6 +2,8 @@
 
 The World Wide Graph: A simple, collaborative, semantic graph database for the entire web to share.
 
+[![2020-03-27-233330_596x329_scrot](https://user-images.githubusercontent.com/978325/77816829-725dd480-7083-11ea-9a90-b31369e84f3b.png)](https://www.facebook.com/michael.karpeles/videos/10102705021806480)
+
 This is the source for https://graph.global/v1/ (the API backend). For the front-end user interface, see https://github.com/w2g/graph.global.
 
 * [Introduction](#introduction)
