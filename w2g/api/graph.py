@@ -2,10 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-    api/music.py
+    api/graph.py
     ~~~~~~~~~~~~
-
-    TodoDAV API
 
     :copyright: (c) 2015 by mek.
     :license: see LICENSE for more details.
@@ -29,7 +27,7 @@ def build_tables():
 
 
 """Used for naming/aliasing specific Edges with Entity"""
-definitions = \
+synonyms = \
     Table('edges_to_entities', core.Base.metadata,
           Column('id', BigInteger, primary_key=True),
           Column('entity_id', BigInteger,
@@ -38,6 +36,17 @@ definitions = \
                  ForeignKey('edges.id'), nullable=False)
           )
 
+"""Maps a Post to its mentioned Entities"""
+mentions = \
+    Table('posts_to_entities', core.Base.metadata,
+          Column('id', BigInteger, primary_key=True),
+          Column('post_id', BigInteger,
+                 ForeignKey('posts.id'), nullable=False),
+          Column('entity_id', BigInteger,
+                 ForeignKey('entities.id'), nullable=False),
+          )
+
+# DEPRECATE
 """The same Resource may be associated with `n` different entities"""
 resource_entities = \
     Table('resources_to_entities', core.Base.metadata,
@@ -48,6 +57,7 @@ resource_entities = \
                  ForeignKey('resources.id'), nullable=False)
           )
 
+# DEPRECATE, should just be a w2gid type
 """The same Task may be associated with `n` different entities (keywords/tags)"""
 task_entities = \
     Table('tasks_to_entities', core.Base.metadata,
@@ -58,7 +68,7 @@ task_entities = \
                  ForeignKey('tasks.id'), nullable=False)
           )
 
-
+# DEPRECATE, should just be a w2gid type
 """Allows a checkin to attach resource bookmarks (placekeeping)"""
 checkin_bookmarks = \
     Table('checkins_to_bookmarks', core.Base.metadata,
@@ -69,6 +79,7 @@ checkin_bookmarks = \
                  ForeignKey('bookmarks.id'), nullable=False)
           )
 
+# DEPRECATE, should just be a w2gid type
 """The same Resource may be associated with `n` edges"""
 resource_edges = \
     Table('resources_to_edges', core.Base.metadata,
@@ -169,7 +180,7 @@ class Edge(core.Base):
 
     # This edge, the (source, relation, target) 3-tuple, can be
     # represented/described as the following entities
-    names = relationship('Entity', secondary=definitions, backref="synonyms")
+    names = relationship('Entity', secondary=synonyms, backref="synonyms")
     # An edge's contexts come from the `edged` backref on Context
 
     resources = relationship('Resource', secondary=resource_edges,
@@ -205,6 +216,8 @@ class Entity(core.Base):
     avatar = Column(Unicode)
     data = Column(JSON)
 
+    post_mentions = relationship('Post', secondary=mentions,
+                             backref="tags")
     resources = relationship('Resource', secondary=resource_entities,
                              backref="tags")
     as_edge = relationship('Edge', primaryjoin="Entity.relation_id == Edge.id",
@@ -224,9 +237,41 @@ class Entity(core.Base):
         return entity
 
     @classmethod
-    def leaderboard(cls, limit=10):
+    def leaderboard(cls, limit=15):
+        """Top entities to list as the initial view"""
         top_entities = db.execute("WITH entities AS (SELECT source_eid entity FROM edges UNION ALL SELECT relation_eid entity FROM edges UNION ALL SELECT target_eid  entity FROM edges), top_entities AS (SELECT entity , count(*) FROM entities GROUP BY 1 ORDER BY 2 desc) SELECT * FROM top_entities LIMIT (%s)" % limit)
         return cls.get_several([entity[0] for entity in top_entities], query=True)
+
+
+class Post(core.Base):
+
+    """The rough equivalent of a facebook or blog post (which gets a
+    reference entity created for it, and which may have links create
+    between its containing tags to its reference, but which itself is
+    not an entity"""
+
+    __tablename__ = "posts"
+
+    id = Column(BigInteger, primary_key=True)
+    title = Column(Unicode, nullable=False)
+    post = Column(Unicode, nullable=False)
+    slug = Column(Unicode, nullable=False)  # e.g. human readable url (optional?)
+    edit_history = Column(JSON, nullable=True)  # a list of edits
+    created = Column(DateTime(timezone=False), default=datetime.utcnow,
+                     nullable=False)
+    modified = Column(DateTime(timezone=False), default=None)
+
+    def dict(self, verbose=False):
+        post = super(Post, self).dict()
+        if verbose:
+            # Get related posts which mention the same entity_id(s)
+
+            post_ids = list(set([post.id for entity in self.tags
+                                 for post in entity.post_mentions
+                                 if post.id != self.id]))
+            post['related_posts'] = [p.dict(verbose=False) for p in self.get_several(post_ids)]
+        return post
+
 
 class Resource(core.Base):
 
