@@ -9,6 +9,7 @@
     :license: see LICENSE for more details.
 """
 
+import re
 from flask import request, Response
 from flask.views import MethodView
 from api import graph  # Query 
@@ -43,15 +44,27 @@ class Page(MethodView):
     @paginate(limit=50)
     def get(self, cls):
         if request.args.get('action') == 'search':
-            return search(graph.core.models[cls])
+            results = search(graph.core.models[cls])
+            if request.args.get('verbose') == 'true':
+                return [r.dict() for r in results]
+            return results
         if request.args.get('action') == 'leaderboard':
-            return graph.core.models[cls].leaderboard(limit=10)
+            return graph.core.models[cls].leaderboard()
         return graph.db.query(graph.core.models[cls])
 
     @rest
-    def post(self, cls):        
+    def post(self, cls):
         c = graph.core.models[cls](**dict([(i, j) for i, j in request.form.items()]))
         c.create()
+
+        if cls == 'posts':
+            title = request.form.get('title')
+            post = request.form.get('post')
+            tag_ids = re.findall('\[\[([0-9]+):', title + post)
+            for tag_id in tag_ids:
+                c.tags.append(graph.Entity.get(tag_id))
+            c.save()
+
         return c.dict()
 
 
