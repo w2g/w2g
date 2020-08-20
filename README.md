@@ -70,11 +70,13 @@ This is the code for the graph.global API server.
 * **Python.** w2g requires python2.7 or python3.4. Note: there are some features (e.g. the /admin sqlalchemy CMS interface -- 2.7 only) which have dependencies which are only available for either 2.7 or 3.4.
 * **Postgresql 9.4** e.g. postgresql-9.4 postgresql-server-dev-9.4 (aptitude)
 
+    ```
     $ git clone https://github.com/w2g/w2g.git
     $ cd w2g
-    $ ./install.sh  # for ubuntu / debian system pre-requisite dependencies (like psql) 
+    $ ./install.sh   # for ubuntu / debian system pre-requisite dependencies (like psql) 
     $ pip install .  # for python lib dependencies 
-
+    ```
+    
 ### Setting up the DB
 
 First, create a user and a database for the project to use:
