@@ -14,11 +14,13 @@ from datetime import datetime
 from sqlalchemy import Column, Unicode, BigInteger, Integer, \
     Boolean, DateTime, ForeignKey, Table, exists, func
 from sqlalchemy import MetaData
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy import JSON
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.orm import relationship
 from api import db, engine, core
+
+BigIntPK = BigInteger().with_variant(Integer(), "sqlite")  # autoincrement on sqlite
 
 
 def build_tables():
@@ -96,7 +98,7 @@ class RemoteId(core.Base):
 
     __tablename__ = "entities_to_sources"
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigIntPK, primary_key=True)
     remote_id = Column(Unicode, nullable=False)
     entity_id = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     source_id = Column(BigInteger, ForeignKey('sources.id'), nullable=False)
@@ -126,7 +128,7 @@ class Context(core.Base):
 
     __tablename__ = "contexts"
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigIntPK, primary_key=True)
     entity_id = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     edge_id = Column(BigInteger, ForeignKey('edges.id'), nullable=False)
 
@@ -150,7 +152,7 @@ class Source(core.Base):
 
     __tablename__ = "sources"
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigIntPK, primary_key=True)
     entity_id = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     url = Column(Unicode, unique=True)  # see vendors.py
     entity = relationship('Entity')
@@ -166,7 +168,7 @@ class Edge(core.Base):
 
     __tablename__ = "edges"
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigIntPK, primary_key=True)
     source_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     relation_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
     target_eid = Column(BigInteger, ForeignKey('entities.id'), nullable=False)
@@ -204,7 +206,7 @@ class Entity(core.Base):
 
     __tablename__ = "entities"
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigIntPK, primary_key=True)
     name = Column(Unicode, nullable=False)
 
     relation_id = Column(BigInteger, ForeignKey('edges.id'), default=None)
@@ -252,7 +254,7 @@ class Post(core.Base):
 
     __tablename__ = "posts"
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigIntPK, primary_key=True)
     title = Column(Unicode, nullable=False)
     post = Column(Unicode, nullable=False)
     slug = Column(Unicode, nullable=False)  # e.g. human readable url (optional?)
@@ -279,7 +281,7 @@ class Resource(core.Base):
 
     __tablename__ = "resources"
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigIntPK, primary_key=True)
     url = Column(Unicode, unique=True)
     title = Column(Unicode)
     description = Column(Unicode)
@@ -293,7 +295,7 @@ class Bookmark(core.Base):
 
     __tablename__ = "bookmarks"
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigIntPK, primary_key=True)
 
     resource_id = Column(BigInteger, ForeignKey('resources.id'), nullable=False)
     # user_id = ... # a bookmark is associated with a user
@@ -313,7 +315,7 @@ class Checkin(core.Base):
 
     __tablename__ = "checkins"
 
-    id = Column(BigInteger, primary_key=True)    
+    id = Column(BigIntPK, primary_key=True)    
     task_id = Column(BigInteger, ForeignKey('tasks.id'), nullable=False)
     note = Column(Unicode)
     created = Column(DateTime(timezone=False), default=datetime.utcnow,
@@ -324,7 +326,7 @@ class Task(core.Base):
 
     __tablename__ = "tasks"
 
-    id = Column(BigInteger, primary_key=True)    
+    id = Column(BigIntPK, primary_key=True)    
     title = Column(Unicode)
     start = Column(DateTime(timezone=False), default=None)
     end = Column(DateTime(timezone=False), default=None)
@@ -332,9 +334,9 @@ class Task(core.Base):
                      nullable=False)
     
 
-for model in core.Base._decl_class_registry:
-    m = core.Base._decl_class_registry.get(model)
+for _mapper in core.Base.registry.mappers:
+    _m = _mapper.class_
     try:
-        core.models[m.__tablename__] = m
-    except:
+        core.models[_m.__tablename__] = _m
+    except Exception:
         pass
