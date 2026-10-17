@@ -1,0 +1,15 @@
+# meksrv app template. Install once:  sudo cp app@.service /etc/systemd/system/
+# Then per app (instance = the dir under /srv):  sudo systemctl enable --now app@graph.global
+[Unit]
+Description=meksrv app %i
+After=network.target
+
+[Service]
+User=mek
+WorkingDirectory=/srv/%i
+ExecStart=/srv/%i/bin/run.sh
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

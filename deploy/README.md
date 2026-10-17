@@ -1,33 +1,37 @@
-# Deploy w2g / graph.global on NEW (SQLite-backed FastAPI)
+# Deploy w2g / graph.global on NEW (SQLite, FastAPI) — via the shared app pattern
 
-This branch (`fastapi-port`) runs the w2g API on Python 3 + FastAPI + **SQLite** (no Postgres).
-It reuses the original SQLAlchemy models (`w2g/api/*`); only the engine (env `DATABASE_URL`),
-the JSON column import, BigInteger PK (sqlite autoincrement variant), and the SQLAlchemy-2.0
-model registry were changed. The `/v1` REST API is reimplemented in `asgi.py`.
+Every converged app runs the same way: a venv + `uvicorn asgi:app` on a localhost port (from `.env`),
+supervised by one shared systemd **template** unit. No per-app unit files.
 
-## Deploy
+## One-time on the server (install the template once)
+```bash
+sudo cp /srv/graph.global/deploy/app@.service /etc/systemd/system/   # shared by ALL apps
+sudo systemctl daemon-reload
+```
+
+## Deploy this app
 ```bash
 sudo mkdir -p /srv/graph.global && sudo chown $USER:$USER /srv/graph.global
 git clone -b fastapi-port https://github.com/w2g/w2g.git /srv/graph.global
 cd /srv/graph.global
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-# provision the data file out-of-band (from the mini):
-#   scp ~/Projects/linode/sqlite/w2g.db mek@NEW:/srv/graph.global/data/w2g.db
-mkdir -p data   # then drop w2g.db here
-sudo cp deploy/w2g.service /etc/systemd/system/
-sudo systemctl daemon-reload && sudo systemctl enable --now w2g
-curl -s localhost:8092/v1/posts | head -c 200     # expect JSON {"posts":[...]}
+cp .env.example .env          # set PORT=8092, DATABASE_URL, SECRET_KEY
+mkdir -p data                 # scp the sqlite file in:
+                              #   scp ~/Projects/linode/sqlite/w2g.db mek@NEW:/srv/graph.global/data/w2g.db
+sudo systemctl enable --now app@graph.global      # run.sh builds the venv on first start
+curl -s localhost:8092/v1/posts | head -c 120
 ```
-TLS/vhost: `deploy/nginx-graph.global.conf` (cert via the meksrv DNS-01 one-liner for graph.global).
 
-## Connect mek.fyi
-mek.fyi calls `GRAPH_POSTS` (default `https://graph.global/v1/posts`). Two options:
-1. **Point graph.global DNS at NEW** (api.graph.global/graph.global A -> NEW) — mek.fyi needs no change.
-2. **Override mek.fyi's upstream** to the local API: set its env/config to `http://127.0.0.1:8092/v1/posts`
-   (mek.fyi's asgi.py reads GRAPH_POSTS from env once made configurable).
+## Update (idempotent)
+```bash
+cd /srv/graph.global && git pull
+sudo systemctl restart app@graph.global
+# only if requirements.txt changed:  rm -rf .venv  (run.sh rebuilds it) then restart
+```
 
-## Notes / TODO
-- Reads are fully working (posts list, slug-search w/ related_posts, entity/edge lookups).
-- Writes (POST/PUT) work for fresh schemas; the shipped w2g.db has BIGINT PKs (no sqlite autoincrement),
-  so new-row creation needs explicit ids or a schema rebuilt from the models (BigIntPK variant).
-- graph.global's static UI (w2g/static) is not wired up here; this serves the /v1 API.
+## Run manually (no systemd)
+```bash
+cd /srv/graph.global && bin/run.sh
+```
+
+TLS/vhost: `deploy/nginx-graph.global.conf` (proxy_pass -> 127.0.0.1:$PORT), cert via meksrv DNS-01.
+Connect mek.fyi: flip graph.global DNS -> NEW (no mek.fyi change), or point mek.fyi GRAPH_POSTS at this app.
